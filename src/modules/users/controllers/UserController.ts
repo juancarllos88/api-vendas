@@ -66,4 +66,40 @@ export default class UserController {
 
     return response.status(StatusCode.NO_CONTENT).json();
   }
+
+  public async find(request: Request, response: Response): Promise<Response> {
+    const { id } = request.params;
+    const { juan } = request.query;
+    const userService = new UserService();
+    const user = await userService.find(id);
+
+    return response.json({
+      id: user?.id,
+      email: user?.email,
+      name: user?.name,
+      created_at: user?.created_at,
+      avatar: user?.avatar,
+    });
+  }
+
+  public async update(request: Request, response: Response): Promise<Response> {
+    const { id } = request.params;
+    const { name, email, password, old_password } = request.body;
+    const userService = new UserService();
+    const user = await userService.update({
+      id,
+      name,
+      email,
+      password,
+      old_password,
+    });
+
+    return response.json({
+      id: user?.id,
+      email: user?.email,
+      name: user?.name,
+      created_at: user?.created_at,
+      avatar: user?.avatar,
+    });
+  }
 }

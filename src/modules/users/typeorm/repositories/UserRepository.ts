@@ -4,7 +4,7 @@ import User from '../entities/User';
 @EntityRepository(User)
 export default class UserRepository extends Repository<User> {
   public async findByName(name: string): Promise<User | undefined> {
-    const user = this.findOne({
+    const user = await this.findOne({
       where: {
         name,
       },
@@ -13,7 +13,7 @@ export default class UserRepository extends Repository<User> {
   }
 
   public async findByEmail(email: string): Promise<User | undefined> {
-    const user = this.findOne({
+    const user = await this.findOne({
       where: {
         email,
       },

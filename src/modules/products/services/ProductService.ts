@@ -10,11 +10,11 @@ interface ICreateRequest {
 }
 
 interface IRequest {
-  id: string;
+  id: number;
 }
 
 interface IUpdateRequest {
-  id: string;
+  id: number;
   name: string;
   price: number;
   quantity: number;

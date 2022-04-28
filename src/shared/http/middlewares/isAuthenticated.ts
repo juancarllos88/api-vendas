@@ -1,6 +1,7 @@
 import { validateToken } from '@shared/util/auth';
 import AppError from '@shared/errors/AppError';
 import { NextFunction, Request, Response } from 'express';
+import StatusCode from '@shared/util/StatusCode';
 
 const isAuthenticated = (
   request: Request,
@@ -12,7 +13,12 @@ const isAuthenticated = (
     throw new AppError('Token is missing');
   }
   const [, token] = authHeader.split(' ');
-  const { sub } = validateToken(token);
+  const { sub, exp } = validateToken(token);
+
+  if (Date.now() >= exp * 1000) {
+    throw new AppError('Token expired.', StatusCode.UNAUTHORIZED);
+  }
+
   request.user = {
     id: sub,
   };

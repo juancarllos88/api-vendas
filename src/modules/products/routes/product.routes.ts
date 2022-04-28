@@ -8,7 +8,7 @@ productRoutes.get('/', controller.findAll);
 
 productRoutes.get(
   '/:id',
-  celebrate({ [Segments.PARAMS]: { id: Joi.string().uuid().required() } }),
+  celebrate({ [Segments.PARAMS]: { id: Joi.string().required() } }),
   controller.find,
 );
 productRoutes.post(
@@ -26,7 +26,7 @@ productRoutes.post(
 productRoutes.put(
   '/:id',
   celebrate({
-    [Segments.PARAMS]: { id: Joi.string().uuid().required() },
+    [Segments.PARAMS]: { id: Joi.string().required() },
     [Segments.BODY]: {
       name: Joi.string().required(),
       price: Joi.number().precision(2).required(),
@@ -38,7 +38,7 @@ productRoutes.put(
 
 productRoutes.delete(
   '/:id',
-  celebrate({ [Segments.PARAMS]: { id: Joi.string().uuid().required() } }),
+  celebrate({ [Segments.PARAMS]: { id: Joi.string().required() } }),
   controller.delete,
 );
 

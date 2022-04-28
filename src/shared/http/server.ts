@@ -7,13 +7,14 @@ import routes from './routes';
 import AppError from '@shared/errors/AppError';
 import '@shared/typeorm';
 import uploadConfig from '@config/upload';
+import { pagination } from 'typeorm-pagination';
 
 const app = express();
+app.use(pagination);
 
 app.use(cors());
 
 app.use(express.json());
-
 app.use(routes);
 app.use(errors());
 app.use('/files', express.static(uploadConfig.directory));
@@ -25,6 +26,7 @@ app.use(
         message: error.message,
       });
     } else {
+      console.log('[Erro API-VENDAS]: ', error.message);
       return response.status(500).json({
         status: 'error',
         message: 'Internal Server Error',

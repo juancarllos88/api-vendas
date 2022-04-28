@@ -1,5 +1,5 @@
 import AppError from '@shared/errors/AppError';
-import { hash } from 'bcryptjs';
+import { hash, compare } from 'bcryptjs';
 import path from 'path';
 import fs from 'fs';
 import { getCustomRepository } from 'typeorm';
@@ -23,10 +23,35 @@ interface ICreateRequest {
   password: string;
 }
 
+interface IUpdateRequest {
+  id: string;
+  name: string;
+  email: string;
+  password: string;
+  old_password: string;
+}
+
 interface IRequest {
   id: string;
   avatarFileName?: string;
 }
+
+interface IPaginateUser {
+  from: number;
+  to: number;
+  per_page: number;
+  total: number;
+  current_page: number;
+  prev_page: number | null;
+  next_page: number | null;
+  data: User[];
+}
+
+const validateUser = (user: User | undefined): void => {
+  if (!user) {
+    throw new AppError('User not found.', StatusCode.NOT_FOUD);
+  }
+};
 
 export default class UserService {
   public async save({ name, email, password }: ICreateRequest): Promise<User> {
@@ -46,10 +71,67 @@ export default class UserService {
     return user;
   }
 
-  public async findAll(): Promise<User[]> {
+  public async update({
+    id,
+    name,
+    email,
+    password,
+    old_password,
+  }: IUpdateRequest): Promise<User> {
     const userRepository = getCustomRepository(UserRepository);
-    const users = userRepository.find();
-    return users;
+
+    const user = await userRepository.findById(id);
+
+    if (!user) {
+      throw new AppError('User not found.', StatusCode.NOT_FOUD);
+    }
+
+    const userUpdateEmail = await userRepository.findByEmail(email);
+
+    if (userUpdateEmail && userUpdateEmail.id !== id) {
+      throw new AppError(
+        'There is already one user with this email.',
+        StatusCode.BAD_REQUEST,
+      );
+    }
+
+    if (password && !old_password) {
+      throw new AppError('Old password is required.', StatusCode.BAD_REQUEST);
+    }
+
+    if (password && old_password) {
+      const checkOldPassword = await compare(old_password, user.password);
+
+      if (!checkOldPassword) {
+        throw new AppError(
+          'Old password does not match.',
+          StatusCode.BAD_REQUEST,
+        );
+      }
+
+      user.password = await hash(password, 8);
+    }
+
+    user.name = name;
+    user.email = email;
+
+    await userRepository.save(user);
+
+    return user;
+  }
+
+  public async findAll(): Promise<IPaginateUser> {
+    const userRepository = getCustomRepository(UserRepository);
+    //const users = await userRepository.find();
+    const users = await userRepository.createQueryBuilder().paginate();
+    return users as IPaginateUser;
+  }
+
+  public async find(id: string): Promise<User | undefined> {
+    const userRepository = getCustomRepository(UserRepository);
+    const user = await userRepository.findById(id);
+    validateUser(user);
+    return user;
   }
 
   public async updateAvatar({
@@ -86,6 +168,15 @@ export default class UserService {
       throw new AppError('User does not exists.', StatusCode.NOT_FOUD);
     }
 
+    const forgotPasswordTemplate = path.resolve(
+      __dirname,
+      '..',
+      '..',
+      '..',
+      'templates',
+      'forgot_password.hbs',
+    );
+
     const userTokenService = new UserTokenService();
     const { token } = await userTokenService.save(user.id);
     await EtherealMail.sendMail({
@@ -95,10 +186,12 @@ export default class UserService {
       },
       subject: '[API Vendas] Recuperação de Senha',
       templateData: {
-        template: `Olá {{name}}. Solicitação de redifinição de senha recebida: {{token}}`,
+        //template: `Olá {{name}}. Solicitação de redifinição de senha recebida: {{token}}`,
+        file: forgotPasswordTemplate,
         variables: {
           name: user.name,
-          token,
+          //token,
+          link: `http://localhost:3000/reset_password?token=${token}`,
         },
       },
     });

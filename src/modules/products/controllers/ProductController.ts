@@ -14,7 +14,7 @@ export default class ProductController {
   public async find(request: Request, response: Response): Promise<Response> {
     const { id } = request.params;
     const service = new ProductService();
-    const product = await service.find({ id });
+    const product = await service.find({ id: Number(id) });
     return response.json(product);
   }
 
@@ -29,14 +29,19 @@ export default class ProductController {
     const { id } = request.params;
     const { name, price, quantity } = request.body;
     const service = new ProductService();
-    const product = await service.update({ id, name, price, quantity });
+    const product = await service.update({
+      id: Number(id),
+      name,
+      price,
+      quantity,
+    });
     return response.json(product);
   }
 
   public async delete(request: Request, response: Response): Promise<Response> {
     const { id } = request.params;
     const service = new ProductService();
-    await service.delete({ id });
+    await service.delete({ id: Number(id) });
     return response.json([]);
   }
 }
